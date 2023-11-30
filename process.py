@@ -101,3 +101,43 @@ fm = als.FMRegression(n_iter=10, init_stdev=0.1,rank=2, l2_reg_w=0.1, l2_reg_V=0
 # %%
 fm.fit(X_train,y_train)
 # %%
+../../fastFM/fastFM-core/bin/fastfm --rng-seed=123  --task=regression --init-var=0.1 --n-iter=50 --step-size=0.01 --solver=sgd --rank=32 --l2-reg-V=0.2 -l2-reg-w=0.2 --test-predict=test.txt  --verbose
+
+
+     --rng-seed=NUM         Seed for random number generator (default current
+                             time(NULL))
+      --train-pairs=FILE     Ranking only! Required training pairs for bpr
+                             training.
+  -t, --task=S               The tasks: 'classification', 'regression' or
+                             'ranking' are supported (default 'regression').
+                             Ranking uses the Bayesian Pairwise Ranking (BPR)
+                             loss and needs an additional file (see
+                             '--train-pairs')
+
+ Solver:
+  -i, --init-var=NUM         N(0, var) is used to initialize the coefficients
+                             of matrix V (default 0.1)
+  -n, --n-iter=NUM           Number of iterations (default 50)
+      --step-size=NUM        Step-size for 'sgd' updates (default 0.01)
+  -s, --solver=S             The solvers: 'als', 'mcmc' and 'sgd' are available
+                             for 'regression' and 'classification (default
+                             'mcmc'). Ranking is only supported by 'sgd'.
+
+ Model Complexity and Regularization:
+  -k, --rank=NUM             Rank of the factorization, Matrix V (default 8).
+      --l2-reg-V=NUM         l2 regularization for the latent representation
+                             (V) of the pairwise coefficients
+      --l2-reg-w=NUM         l2 regularization for the linear coefficients (w)
+  -r, --l2-reg=NUM           l2 regularization, set equal penalty for all
+                             coefficients (default 1)
+
+ I/O options:
+  -7, --test-predict=FILE    Save prediction from TEST_FILE to FILE.
+
+ Informational Options:
+  -q, --quiet, --silent      Don't produce any output
+  -v, --verbose              Produce verbose output
+
+  -?, --help                 Give this help list
+      --usage                Give a short usage message
+  -V, --version              Print program version

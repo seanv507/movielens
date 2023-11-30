@@ -21,6 +21,9 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
 #%%
+%load_ext autoreload
+%autoreload all
+#%%
 import wandb
 #%%
 # Data:     https://files.grouplens.org/datasets/movielens/ml-1m.zip
@@ -128,72 +131,47 @@ dl_train = DataLoader(ds_train, BS, shuffle=True, num_workers=2)
 dl_val = DataLoader(ds_val, BS, shuffle=True, num_workers=2)
 
 xb, yb = next(iter(dl_train))
+n_feats = int(pd.concat([df_train, df_val]).max().max())
+n_feats = n_feats + 1 # "+ 1" to account for 0 - indexing
+
 print(xb.shape, yb.shape)
 print(xb)
 print(yb)
 #%%
+from fm_torch import FM
+from fm_prod_torch import FM_prod
 
-class FM(nn.Module):
-    """ Factorization Machine + user/item bias, weight init., sigmoid_range 
-        Paper - https://www.csie.ntu.edu.tw/~b97053/paper/Rendle2010FM.pdf
-    """
-    def __init__(self, num_feats, emb_dim, bias, sigmoid, init_std):
-        super().__init__()
-        self.x_emb = nn.Embedding(num_feats, emb_dim)
-        # embedding has indices as inputs rather than 1 hot coding x input  is implicitly 1
-        # output is vector for each feature
-        self.bias = bias
-        self.sigmoid = sigmoid
-        self.init_std = init_std
-        self.x_emb.weight.data.normal_(0,init_std)
-        if bias:
-            self.x_bias = nn.Parameter(torch.zeros(num_feats))
-            self.offset = nn.Parameter(torch.zeros(1))
-        
-
-    def forward(self, X):
-        # Derived time complexity - O(nk)
-        x_emb = self.x_emb(X) # [bs, num_feats] -> [bs, num_feats, emb_dim] $\v_{i,f}x_i$
-        pow_of_sum = x_emb.sum(dim=1).pow(2) # -> [bs, num_feats]
-        sum_of_pow = x_emb.pow(2).sum(dim=1) # -> [bs, num_feats]
-        fm_out = (pow_of_sum - sum_of_pow).sum(1)*0.5  # -> [bs]
-        if self.bias:
-            x_biases = self.x_bias[X].sum(1) # -> [bs]
-            fm_out +=  x_biases + self.offset # -> [bs]
-        if self.sigmoid:
-            return self.sigmoid_range(fm_out, low=0.5) # -> [bs]
-        return fm_out
-
-    def sigmoid_range(self, x, low=0, high=5.5):
-        """ Sigmoid function with range (low, high) """
-        return torch.sigmoid(x) * (high-low) + low
+#%%
+models = {"FM": FM, "FM_prod": FM_prod}
+model_t = "FM"
 
 CFG = {
-    'lr': 0.001,
-    'num_epochs': 100,
-    'weight_decay': 0.1,
-    'emb_dim': 100,
-    'sigmoid': False,
+    'model': model_t,
+    'lr': 0.0001,
+    'num_epochs': 1000,
+    'weight_decay': 0.4,
+    'emb_dim': 50,
     'bias': True,
-    'init_std': 0.1,
+    'init_std': 0.01,
+    'seed': 123,
 }
 
-n_feats = int(pd.concat([df_train, df_val]).max().max())
-n_feats = n_feats + 1 # "+ 1" to account for 0 - indexing
-mdl = FM(n_feats, 
+mdl = models[CFG['model']](n_feats, 
          emb_dim=CFG['emb_dim'],
          init_std=CFG['init_std'], 
+         seed=CFG['seed'],
          bias=CFG['bias'], 
-         sigmoid=CFG['sigmoid'])
+         )
 mdl.to(device)
 opt = optim.AdamW(mdl.parameters(), lr=CFG['lr'], weight_decay=CFG['weight_decay'])
 loss_fn = nn.MSELoss()
 print(f'Model weights: {list(dict(mdl.named_parameters()).keys())}')
-wandb.init(project="matrix_fact_0", config = CFG)
+
 
 #%%
 epoch_train_losses, epoch_val_losses = [], []
-
+#%%
+wandb.init(project="matrix_fact_0", config = CFG)
 for i in range(CFG['num_epochs']):
     train_losses, val_losses = [], []
     mdl.train()
@@ -219,7 +197,9 @@ for i in range(CFG['num_epochs']):
     s = (f'Epoch: {i}, Train Loss: {epoch_train_loss:0.2f}, '
          f'Val Loss: {epoch_val_loss:0.2f}'
         )
+    wandb.log({"train_loss": epoch_train_loss, "val_loss": epoch_val_loss, })
     print(s)
+wandb.finish()
 
 
 # %%
