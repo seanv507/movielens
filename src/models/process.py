@@ -37,7 +37,7 @@ def get_movielens_1m():
         df = pd.read_parquet(LOCAL_DATA_DIR + "data.parquet")
     except FileNotFoundError:
         pass
-    if df is not None:
+    if df is None:
         df = download_movielens_1m()
         df = convert_categorical(df)
         df = make_embedding_indices(df)
