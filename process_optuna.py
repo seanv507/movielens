@@ -42,9 +42,9 @@ def create_study():
         client.submit(study.optimize, objective, n_trials=1, pure=False, callbacks=[wandbc])
         for _ in range(n_trials)
     ]
-    # _ = wait(jobs)
+    _ = wait(jobs)
 
-    # analyse_results(study)
+    analyse_results(study)
 
 def objective(trial):
     df = process.get_movielens_1m()
