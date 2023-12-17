@@ -55,7 +55,6 @@ model_setup = process.create_model_setup(CFG, n_feats)
 #%%
 epoch_train_losses, epoch_val_losses = [], []
 #%%
-wandb.init(project="matrix_fact_0", config = CFG)
 for i in range(CFG['num_epochs']):
     mdl, epoch_train_loss, epoch_val_loss = process.train_model(**model_setup, dl_train=dl_train, dl_val=dl_val)
     s = (f'Epoch: {i}, Train Loss: {epoch_train_loss:0.2f}, '
