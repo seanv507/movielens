@@ -1,5 +1,7 @@
 import os
 import coiled
+from optuna.trial import TrialState
+
 
 def get_client():
     wandbkey = os.environ["WANDB_API_KEY"]

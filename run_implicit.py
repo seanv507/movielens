@@ -14,7 +14,7 @@ from models import process_implicit, process_coiled
 def create_study():
 #    create_software_environment()
 
-    wandb_kwargs = {"project": "matrix_factorisation_movielens_test"}
+    wandb_kwargs = {"project": "matrix_factorisation_movielens_test_01"}
     wandbc = optuna.integration.WeightsAndBiasesCallback(wandb_kwargs=wandb_kwargs)
     @wandbc.track_in_wandb()
     def objective(trial):

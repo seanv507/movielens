@@ -35,8 +35,9 @@ from implicit.nearest_neighbours import (
 from implicit.gpu import HAS_CUDA
 from implicit.evaluation import leave_k_out_split, ranking_metrics_at_k
 
+logging.basicConfig()
 log = logging.getLogger("implicit")
-logging.basicConfig(level=logging.DEBUG)
+log.setLevel(level=logging.DEBUG)
 
 
 def objective(trial):
@@ -60,9 +61,9 @@ def set_cfg(trial):
     cfg["variant"] = trial.suggest_categorical("data variant",["1m"])
     cfg["model_name"] = trial.suggest_categorical("model_name",["als"])
     cfg["factors"] = trial.suggest_categorical("embedding dimension", [1,2,4,8,16,32,64,128,])
-    cfg["regularisation"] = trial.suggest_categorical("regularisation", [1e-6,1e-5,1e-4,1e-3,1e-2,1e-1,])
+    cfg["regularization"] = trial.suggest_categorical("regularization", [1e-6,1e-5,1e-4,1e-3,1e-2,1e-1,])
     cfg["iterations"] = trial.suggest_categorical("iterations", [16,32,64,128])
-    cfg["use_BM25"] = trial.suggest_boolean("use BM 25")
+    cfg["use_BM25"] = trial.suggest_categorical("use BM 25", [True, False])
     wandb.config = cfg
     return cfg
 
@@ -72,6 +73,7 @@ def benchmark_movies(
         model_kwargs={}):
     
     model_name = model_kwargs.pop("model_name")
+    use_bm25 = model_kwargs.pop("use_bm25", False)
     model_proc = {
         "als": AlternatingLeastSquares,
         "bpr": BayesianPersonalizedRanking,
@@ -106,7 +108,6 @@ def benchmark_movies(
         ratings_train, ratings_test = leave_k_out_split(ratings, K=5, train_only_size=0.0)    
         ratings = ratings_train # to not break rest of code
         # lets weight these models by bm25weight.
-        use_bm25 = model_kwargs.pop("use_bm25", False)
         if use_bm25:
             log.debug("weighting matrix by bm25_weight")
             ratings = (bm25_weight(ratings, B=0.9) * 5)
