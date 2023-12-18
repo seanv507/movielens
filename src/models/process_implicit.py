@@ -60,6 +60,7 @@ def set_cfg(trial):
     cfg = {}
     cfg["variant"] = trial.suggest_categorical("data variant",["1m"])
     cfg["model_name"] = trial.suggest_categorical("model_name",["als"])
+    cfg["use_gpu"] = trial.suggest_categorical("use gpu",[True])
     cfg["factors"] = trial.suggest_categorical("embedding dimension", [1,2,4,8,16,32,64,128,])
     cfg["regularization"] = trial.suggest_categorical("regularization", [1e-6,1e-5,1e-4,1e-3,1e-2,1e-1,])
     cfg["iterations"] = trial.suggest_categorical("iterations", [16,32,64,128])
@@ -67,13 +68,25 @@ def set_cfg(trial):
     wandb.config = cfg
     return cfg
 
+
+#"IndexError('index 3953 is out of bounds for axis 1 with size 3953')"
+
+# 2023-12-18 18:04:09.9860
+
+# 10.0.243.177
+
+# [W 2023-12-18 17:04:09,986] Trial 99 failed with parameters: 
+# {'data variant': '1m', 'model_name': 'als', 'embedding dimension': 16, 
+#  'regularization': 1e-06, 'iterations': 128, 'use BM 25': True} 
+#because of the following error: IndexError('index 3953 is out of bounds for axis 1 with size 3953').
+
 def benchmark_movies(
         min_rating=4.0, 
         variant="20m",
         model_kwargs={}):
     
     model_name = model_kwargs.pop("model_name")
-    use_bm25 = model_kwargs.pop("use_bm25", False)
+    use_bm25 = model_kwargs.pop("use_BM25", False)
     model_proc = {
         "als": AlternatingLeastSquares,
         "bpr": BayesianPersonalizedRanking,
@@ -122,6 +135,6 @@ def benchmark_movies(
     log.debug("trained model '%s' in %s", model_name, time.time() - start)
     rankings = ranking_metrics_at_k(model, ratings_train, ratings_test)
     log.info("ranking metrics = %s " % rankings)
-    wandb.log(**rankings)
+    wandb.log(data=rankings)
     # "precision", "map", "ndcg","auc"]
     return rankings["precision"]

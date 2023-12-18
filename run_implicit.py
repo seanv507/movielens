@@ -10,6 +10,9 @@ import wandb
 from models import process_implicit, process_coiled
 
 
+# compute the AUC metric by repeatedly 
+# randomly splitting the dataset into a 80% training set and a 20% test set.
+# The final score is given averaging across 10 repetitions.
 
 def create_study():
 #    create_software_environment()
@@ -28,25 +31,15 @@ def create_study():
     study = optuna.create_study(direction='maximize', 
                                 storage=DaskStorage(client=client),
                                 load_if_exists=True)
-    
-
+    # study.optimize(objective, n_trials=1, callbacks=[wandbc])
+    # exit(0)
     jobs = [
-        client.submit(study.optimize, objective, n_trials=1, pure=False, callbacks=[wandbc])
+        client.submit(study.optimize, objective, n_trials=1, callbacks=[wandbc],pure=False)
         for _ in range(n_trials)
     ]
     _ = wait(jobs)
 
     process_coiled.analyse_results(study)
-
-
-def adjust_CFG(CFG, trial):
-    CFG["emb_dim"]  = trial.suggest_categorical("embedding dimension", [4])#[1,2,4,8,16,32,64])
-    CFG["weight_decay"] = trial.suggest_categorical("weight decay", [0.1, 0.01])
-    CFG["lr"] = trial.suggest_categorical("learning rate", [0.1, 0.01, 0.002, 0.001, 0.0001])
-    CFG["init_std"] = trial.suggest_categorical("init_std", [0.01])
-    return CFG
-
-
 
 
 if __name__ == "__main__":

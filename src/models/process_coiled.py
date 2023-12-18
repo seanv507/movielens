@@ -9,8 +9,8 @@ def get_client():
         name="pytorch",
         #software="pytorch",
         package_sync=True,
-        n_workers=2,
-        worker_gpu=0,
+        n_workers=3,
+        worker_gpu=1,
         scheduler_gpu=0,
         # launch one task per worker to avoid oversaturating the GPU
         worker_options={"nthreads": 1},
