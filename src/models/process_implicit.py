@@ -10,15 +10,11 @@ filtered down to positive reviews (4+ stars) to construct an implicit
 dataset
 """
 
-from __future__ import print_function
 
-import argparse
-import codecs
 import logging
 import time
 
 import numpy as np
-import tqdm
 
 import wandb
 
@@ -65,20 +61,10 @@ def set_cfg(trial):
     cfg["regularization"] = trial.suggest_categorical("regularization", [1e-6,1e-5,1e-4,1e-3,1e-2,1e-1,])
     cfg["iterations"] = trial.suggest_categorical("iterations", [16,32,64,128])
     cfg["use_BM25"] = trial.suggest_categorical("use BM 25", [True, False])
+    cfg["ranking_at_k"] = trial.suggest_categorical("ranking_at_k", [10,20])
     wandb.config = cfg
     return cfg
 
-
-#"IndexError('index 3953 is out of bounds for axis 1 with size 3953')"
-
-# 2023-12-18 18:04:09.9860
-
-# 10.0.243.177
-
-# [W 2023-12-18 17:04:09,986] Trial 99 failed with parameters: 
-# {'data variant': '1m', 'model_name': 'als', 'embedding dimension': 16, 
-#  'regularization': 1e-06, 'iterations': 128, 'use BM 25': True} 
-#because of the following error: IndexError('index 3953 is out of bounds for axis 1 with size 3953').
 
 def benchmark_movies(
         min_rating=4.0, 
@@ -87,6 +73,7 @@ def benchmark_movies(
     
     model_name = model_kwargs.pop("model_name")
     use_bm25 = model_kwargs.pop("use_BM25", False)
+    K = model_kwargs.pop("ranking_at_k", None)
     model_proc = {
         "als": AlternatingLeastSquares,
         "bpr": BayesianPersonalizedRanking,
@@ -109,32 +96,36 @@ def benchmark_movies(
     # read in the input data file
     start = time.time()
     titles, ratings = get_movielens(variant)
+    log.info("read data file in %s", time.time() - start)
+    ratings = make_implicit_movielens(ratings, min_rating)
+    if model_name == "als":
+    
+        ratings = ratings
+        # lets weight these models by bm25weight.
+        # todo check what bm25 does
+        if use_bm25:
+            log.debug("weighting matrix by bm25_weight")
+            ratings = (bm25_weight(ratings, B=0.9) * 5).tocsr()
 
+    user_ratings = ratings.T.tocsr()
+    user_ratings_train, user_ratings_test = leave_k_out_split(user_ratings, K=5, train_only_size=0.0)
+
+    # train the model
+    log.debug("training model %s", model_name)
+    start = time.time()
+    model.fit(user_ratings_train)
+    log.debug("trained model '%s' in %s", model_name, time.time() - start)
+    rankings = ranking_metrics_at_k(model, user_ratings_train, user_ratings_test, K=K)
+    log.info("ranking metrics = %s " % rankings)
+    wandb.log(data=rankings)
+    # "precision", "map", "ndcg","auc"]
+    return rankings["precision"]
+
+
+def make_implicit_movielens(ratings, min_rating):
     # remove things < min_rating, and convert to implicit dataset
     # by considering ratings as a binary preference only
     ratings.data[ratings.data < min_rating] = 0
     ratings.eliminate_zeros()
     ratings.data = np.ones(len(ratings.data))
-    log.info("read data file in %s", time.time() - start)
-    
-    if model_name == "als":
-        ratings_train, ratings_test = leave_k_out_split(ratings, K=5, train_only_size=0.0)    
-        ratings = ratings_train # to not break rest of code
-        # lets weight these models by bm25weight.
-        if use_bm25:
-            log.debug("weighting matrix by bm25_weight")
-            ratings = (bm25_weight(ratings, B=0.9) * 5)
-        ratings = ratings.tocsr()
-
-    user_ratings = ratings.T.tocsr()
-
-    # train the model
-    log.debug("training model %s", model_name)
-    start = time.time()
-    model.fit(user_ratings)
-    log.debug("trained model '%s' in %s", model_name, time.time() - start)
-    rankings = ranking_metrics_at_k(model, ratings_train, ratings_test)
-    log.info("ranking metrics = %s " % rankings)
-    wandb.log(data=rankings)
-    # "precision", "map", "ndcg","auc"]
-    return rankings["precision"]
+    return ratings    

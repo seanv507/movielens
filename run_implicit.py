@@ -17,7 +17,7 @@ from models import process_implicit, process_coiled
 def create_study():
 #    create_software_environment()
 
-    wandb_kwargs = {"project": "matrix_factorisation_movielens_test_01"}
+    wandb_kwargs = {"project": "matrix_factorisation_movielens_test_02"}
     wandbc = optuna.integration.WeightsAndBiasesCallback(wandb_kwargs=wandb_kwargs)
     @wandbc.track_in_wandb()
     def objective(trial):
@@ -26,7 +26,7 @@ def create_study():
 
     client = process_coiled.get_client()
 
-    n_trials = 100
+    n_trials = 400
 
     study = optuna.create_study(direction='maximize', 
                                 storage=DaskStorage(client=client),

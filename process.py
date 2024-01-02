@@ -101,7 +101,7 @@ fm = als.FMRegression(n_iter=10, init_stdev=0.1,rank=2, l2_reg_w=0.1, l2_reg_V=0
 # %%
 fm.fit(X_train,y_train)
 # %%
-../../fastFM/fastFM-core/bin/fastfm --rng-seed=123  --task=regression --init-var=0.1 --n-iter=50 --step-size=0.01 --solver=sgd --rank=32 --l2-reg-V=0.2 -l2-reg-w=0.2 --test-predict=test.txt  --verbose
+../fastFM/fastFM-core/bin/fastfm --rng-seed=123  --task=regression --init-var=0.1 --n-iter=50 --step-size=0.01 --solver=sgd --rank=32 --l2-reg-V=0.2 --l2-reg-w=0.2 --test-predict=test.txt  --verbose
 
 
      --rng-seed=NUM         Seed for random number generator (default current
