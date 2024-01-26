@@ -8,7 +8,7 @@ def get_client():
     cluster = coiled.Cluster(
         name="pytorch",
         software="pytorch",
-        package_sync=False,
+        #package_sync=False,
         n_workers=3,
         worker_gpu=0,
         scheduler_gpu=0,
