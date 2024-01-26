@@ -7,14 +7,14 @@ def get_client():
     wandbkey = os.environ["WANDB_API_KEY"]
     cluster = coiled.Cluster(
         name="pytorch",
-        #software="pytorch",
-        package_sync=True,
+        software="pytorch",
+        package_sync=False,
         n_workers=3,
-        worker_gpu=1,
+        worker_gpu=0,
         scheduler_gpu=0,
         # launch one task per worker to avoid oversaturating the GPU
         worker_options={"nthreads": 1},
-        #spot_policy="spot",
+        spot_policy="spot",
     )
     cluster.send_private_envs({"WANDB_API_KEY": wandbkey})
     client = cluster.get_client()
@@ -38,8 +38,11 @@ def create_software_environment():
                 "pynvml",
                 "wandb",
                 "optuna",
+                "scikit-learn",
+                "Cython",
             ],
         },
+        pip=["fastfm","git+https://GIT_TOKEN@github.com/seanv507/movielens.git"],
         gpu_enabled=True,
         region_name="eu-central-1"
     )

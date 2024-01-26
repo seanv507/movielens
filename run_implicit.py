@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 import os
 from dask.distributed import wait
-import coiled
 import optuna
 from optuna.integration.dask import DaskStorage
 
 
-import wandb
 from models import process_implicit, process_coiled
 
 
