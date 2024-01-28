@@ -42,13 +42,13 @@ def make_config(trial):
    
     model_config = {}
 
-    model_cfg["variant"] = trial.suggest_categorical("data variant",["1m"])
-    model_cfg["optim"] = "als"
-    model_cfg["n_iter"] = trial.suggest_categorical("n_iter",[10])
-    model_cfg["rank"] = trial.suggest_categorical("embedding dimension", [1,2,4,8,16,32,64,128,])
-    model_cfg["init_stdev"] = 0.1, 
-    model_cfg["l2_reg_w"]: trial.suggest_categorical("l2_reg_w", [2,4,8,16])
-    model_cfg["l2_reg_V"]: trial.suggest_categorical("l2_reg_V", [2,4,8,16])
+    model_config["variant"] = trial.suggest_categorical("data variant",["1m"])
+    model_config["optim"] = "als"
+    model_config["n_iter"] = trial.suggest_categorical("n_iter",[10])
+    model_config["rank"] = trial.suggest_categorical("embedding dimension", [1,2,4,8,16,32,64,128,])
+    model_config["init_stdev"] = 0.1, 
+    model_config["l2_reg_w"]: trial.suggest_categorical("l2_reg_w", [2,4,8,16])
+    model_config["l2_reg_V"]: trial.suggest_categorical("l2_reg_V", [2,4,8,16])
     cfg = {
         "data": data_config,
         "model": model_config,
