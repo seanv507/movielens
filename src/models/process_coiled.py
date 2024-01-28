@@ -49,6 +49,7 @@ def create_software_environment():
             ],
         },
         pip=["fastfm","git+https://GIT_TOKEN@github.com/seanv507/movielens.git"],
+        force_rebuild=True,
         gpu_enabled=True,
         region_name="eu-central-1"
     )
