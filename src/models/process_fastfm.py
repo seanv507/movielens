@@ -42,7 +42,6 @@ def make_config(trial):
    
     model_config = {}
 
-    model_config["variant"] = trial.suggest_categorical("data variant",["1m"])
     model_config["optim"] = "als"
     model_config["n_iter"] = trial.suggest_categorical("n_iter",[10])
     model_config["rank"] = trial.suggest_categorical("embedding dimension", [1,2,4,8,16,32,64,128,])
